@@ -1,21 +1,27 @@
 use super::{CrawlerHelper, NextPageStatus, HxMeta};
 use select::document::Document;
 use select::predicate::{Attr, Class, Name, Predicate};
-use std::collections::{HashSet, HashMap};
+use std::collections::{HashSet};
 
-pub struct EHentaiCrawler {
+pub struct NHentaiCrawler {
     
 }
 
-impl EHentaiCrawler {
+fn resolve_url(s: &str) -> String {
+    let mut base = "https://nhentai.net".to_owned();
+    base.push_str(s);
+    base
+}
+
+impl NHentaiCrawler {
     pub fn new() -> Self {
-        return EHentaiCrawler{}
+        return NHentaiCrawler{}
     }
     fn parse_meta(&self, doc: &Document) -> Result<HxMeta, Box<dyn std::error::Error>> {
-        let title = doc.find(Attr("id", "gd2").descendant(Attr("id", "gn"))).next().expect("Title Element not found").text();
-        let title_ja = doc.find(Attr("id", "gd2").descendant(Attr("id", "gj"))).next().expect("Title JA Element not found").text();
+        let title = doc.find(Name("h1").and(Class("title"))).next().expect("Title Element not found").text();
+        let title_ja = doc.find(Name("h2").and(Class("title"))).next().expect("Title JA Element not found").text();
         let mut tags: HashSet<String> = HashSet::new();
-        for ele in doc.find(Class("gtl")){
+        for ele in doc.find(Class("tag").descendant(Class("name"))){
             tags.insert(ele.text());
         }
         Result::Ok(HxMeta{ title: title, title_ja: title_ja, tags: tags })
@@ -25,31 +31,32 @@ impl EHentaiCrawler {
         let doc: &Document = doc_box.as_ref();
         
         if !helper.image_exists(name, page).await? {
-            let src = doc.find(Attr("id", "img")).next().expect("Failed to find image.").attr("src").unwrap();
+            let src = doc.find(Attr("id", "image-container").descendant(Name("a")).descendant(Name("img"))).next().expect("Failed to find image.").attr("src").unwrap();
             let data = helper.get_data(src).await?;
             helper.write_image(name, page, data).await?;
         }
 
         println!("Image: {} / {}", name, page);
-        let next_page_url = doc.find(Attr("id", "next")).next().expect("No next button").attr("href").expect("URL href is empty");
-        Result::Ok(if next_page_url == url {
-            NextPageStatus::LastPage
-        } else {
-            NextPageStatus::HasNext{page: page+1, url: String::from(next_page_url)}
+        Ok(match doc.find(Class("next").and(Class("invisible").not())).next() {
+            Some(ele) => {
+                let next_page_url = ele.attr("href").expect("href not found");
+                let next_page_url = resolve_url(next_page_url);
+                NextPageStatus::HasNext{page: page+1, url: String::from(next_page_url)}
+            },
+            None => NextPageStatus::LastPage
         })
     }
 
     pub async fn download(&self, helper: &CrawlerHelper, url: &str) -> Result<(), Box<dyn std::error::Error>> {
-        let mut headers: HashMap<String, String> = HashMap::new();
-        headers.insert(String::from("Cookie"), String::from("sl=dm_1; nw=1"));
-        let doc_box = helper.get_page_with_headers(url, headers).await?;
+        let doc_box = helper.get_page(url).await?;
         let doc: &Document = &doc_box;
         let meta = self.parse_meta(doc)?;
         println!("{}", meta.title);
         if helper.finished(&meta.title).await? {
             return Result::Ok(())
         }
-        let first_page_url = doc.find(Class("gdtm").descendant(Name("a"))).next().expect("Cannot find 1st page.").attr("href").unwrap();
+        let first_page_url = doc.find(Class("gallerythumb")).next().expect("Cannot find 1st page.").attr("href").unwrap();
+        let first_page_url = resolve_url(first_page_url);
         let mut next_page: i32 = 0;
         let mut next_url: String = String::from(first_page_url);
         helper.create_dir(&meta.title).await?;

@@ -1,4 +1,5 @@
 pub mod ehentai;
+pub mod nhentai;
 
 use super::fs::HxFS;
 use crate::err::HxError;
@@ -7,12 +8,19 @@ use serde::{Deserialize, Serialize};
 use bytes::BufMut;
 use tokio::time::{sleep, Duration};
 use std::convert::TryFrom;
+use async_trait::async_trait;
 
 use select::document::Document;
 
-pub struct CrawlerHelper<'a> {
-    fs: &'a dyn HxFS
+#[async_trait]
+pub trait HxCrawler {
+    async fn download(&self, helper: &CrawlerHelper, url: &str) -> Result<(), Box<dyn std::error::Error>>;
 }
+
+pub struct CrawlerHelper {
+    fs: Box<dyn HxFS + Send>
+}
+
 
 async fn retry_request<F, Fut>(func: F) -> reqwest::Response 
     where
@@ -31,8 +39,8 @@ async fn retry_request<F, Fut>(func: F) -> reqwest::Response
     panic!("Failed for too many times");
 }
 
-impl<'a> CrawlerHelper<'a> {
-    pub fn new(fs: &'a dyn HxFS) -> Self {
+impl CrawlerHelper {
+    pub fn new(fs: Box<dyn HxFS + Send>) -> Self {
         return CrawlerHelper {fs: fs}
     }
     pub async fn get_page(&self, url: &str) -> Result<Box<Document>, Box<dyn std::error::Error>> {
