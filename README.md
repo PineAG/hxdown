@@ -17,7 +17,7 @@ hxdown是一款在命令行运行的(你懂的)画像下载软件。基于Rust�
 在`C:\Users\PineAG\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1`中加入下列语句
 
 ```
-export all_proxy='http://host:port'
+$env:all_proxy='http://host:port'
 ```
 
 ### macOS/Linux
