@@ -39,3 +39,5 @@ jobs:
         file_glob: true
         file: target/release/hxdown-*
         tag: latest
+        overwrite: true
+        
