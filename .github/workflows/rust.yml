@@ -20,6 +20,9 @@ jobs:
           - os: windows-latest
             target: hxdown.exe
             release: hxdown-win.exe
+          - os: ubuntu-20.04
+            target: hxdown
+            release: hxdown-linux
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
