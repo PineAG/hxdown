@@ -1,5 +1,5 @@
 # hxdown
-![hxdown](https://github.com/PineAG/hxdown/actions/workflows/rust.yml/badge.svg)
+[![hxdown](https://github.com/PineAG/hxdown/actions/workflows/rust.yml/badge.svg)](https://github.com/PineAG/hxdown/actions/workflows/rust.yml)
 
 hxdown(HXD Downloader) is a CLI gallery downloader made with love and Rust.
 
