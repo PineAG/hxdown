@@ -5,7 +5,7 @@ hxdown(HXD Downloader) is a CLI gallery downloader made with love and Rust.
 
 hxdown是一款在命令行运行的(你懂的)画像下载软件。基于Rust编写。
 
-[Download](https://github.com/PineAG/hxdown/releases/tag/refs%2Fheads%2Fmaster)
+[下载/Download](https://github.com/PineAG/hxdown/releases/tag/latest)
 
 ## Usage
 
